@@ -9,8 +9,8 @@ Gem::Specification.new do |spec|
   spec.authors       = ["mathieul"]
   spec.email         = ["mathieu@gmail.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because RubyGems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
+  spec.summary       = %q{Active record lazy association generator leveraging batch-loader to avoid N+1 DB queries.}
+  spec.description   = %q{Active record lazy association generator leveraging batch-loader to avoid N+1 DB queries.}
   spec.homepage      = "https://github.com/mathieul/batch-loader-active-record"
   spec.license       = "MIT"
 
@@ -28,8 +28,9 @@ Gem::Specification.new do |spec|
   end
   spec.require_paths = ["lib"]
 
+  spec.add_dependency "batch-loader", "~> 1.2.0"
+
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
-  spec.add_development_dependency "batch-loader", "~> 1.2.0"
 end
