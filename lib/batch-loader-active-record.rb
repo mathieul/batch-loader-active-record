@@ -1,0 +1,1 @@
+require_relative "./batch_loader_active_record"
