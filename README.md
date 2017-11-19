@@ -1,6 +1,7 @@
 # Batch Loader - Active Record #
 
 [![Build Status](https://travis-ci.org/mathieul/batch-loader-active-record.svg?branch=master)](https://travis-ci.org/mathieul/batch-loader-active-record)
+[![Gem Version](https://badge.fury.io/rb/batch-loader-active-record.svg)](https://badge.fury.io/rb/batch-loader-active-record)
 
 This gem allows to leverage the awesome [batch-loader gem](https://github.com/exAspArk/batch-loader) to generate lazy Active Record relationships without any boilerplate.
 
