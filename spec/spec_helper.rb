@@ -1,5 +1,8 @@
 require "bundler/setup"
 require "batch_loader_active_record"
+require "pry"
+
+Dir[File.join(__dir__, "support/**/*.rb")].each(&method(:require))
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
