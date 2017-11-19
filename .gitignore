@@ -6,6 +6,9 @@
 /pkg/
 /spec/reports/
 /tmp/
+/log/
+
+.byebug_history
 
 # rspec failure tracking
 .rspec_status
