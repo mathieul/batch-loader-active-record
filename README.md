@@ -1,15 +1,15 @@
-# BatchLoaderActiveRecord
+# Batch Loader - Active Record #
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/batch_loader_active_record`. To experiment with that code, run `bin/console` for an interactive prompt.
+[![Build Status](https://travis-ci.org/mathieul/batch-loader-active-record.svg?branch=master)](https://travis-ci.org/mathieul/batch-loader-active-record)
 
-TODO: Delete this and the text above, and describe your gem
+This gem allows to leverage the awesome [batch-loader gem](https://github.com/exAspArk/batch-loader) to generate lazy Active Record relationships without any boilerplate.
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'batch_loader_active_record'
+gem 'batch-loader-active-record'
 ```
 
 And then execute:
@@ -18,11 +18,17 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install batch_loader_active_record
+    $ gem install batch-loader-active-record
 
 ## Usage
 
-TODO: Write usage instructions here
+This is a very simple gem which just contains a mixin to include and give access to class methods for each association kind:
+
+* `belongs_to_lazy`
+* `has_one_lazy`
+* `has_many_lazy`
+
+You use those generators in replacement of the original Active Record association class methods.
 
 ## Development
 
@@ -32,8 +38,12 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/batch_loader_active_record.
+Bug reports and pull requests are welcome on GitHub at https://github.com/mathieul/batch-loader-active-record. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
 ## License
 
 The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+
+## Code of Conduct
+
+Everyone interacting in the BatchLoaderActiveRecord project’s codebases, issue trackers, chat rooms and mailing lists is expected to follow the [code of conduct](https://github.com/mathieul/batch-loader-active-record/blob/master/CODE_OF_CONDUCT.md).
