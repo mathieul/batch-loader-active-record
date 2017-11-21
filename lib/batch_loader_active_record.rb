@@ -39,10 +39,12 @@ module BatchLoaderActiveRecord
     def has_many_lazy(*args)
       has_many(*args).tap do |reflections|
         assoc = reflections.values.last
-        batch_key = [table_name, assoc.name]
-        define_method(:"#{assoc.name}_lazy") do
+        base_key = [table_name, assoc.name]
+        define_method(:"#{assoc.name}_lazy") do |instance_scope = nil|
+          batch_key = base_key
+          batch_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
           BatchLoader.for(id).batch(default_value: [], key: batch_key) do |model_ids, loader|
-            assoc.klass.where(assoc.foreign_key => model_ids).each do |instance|
+            (instance_scope || assoc.klass).where(assoc.foreign_key => model_ids).each do |instance|
               loader.call(instance.public_send(assoc.foreign_key)) { |value| value << instance }
             end
           end
