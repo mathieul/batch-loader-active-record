@@ -105,6 +105,56 @@ RSpec.describe BatchLoaderActiveRecord do
     end
   end
 
+  describe "has_many_lazy through: ..." do
+    before(:all) do
+      Agent = new_model(:agent) do
+        include BatchLoaderActiveRecord
+        has_many :phones
+        has_many_lazy :calls, through: :phones
+      end
+      Phone = new_model(:phone, agent_id: :integer, enabled: :boolean) do
+        belongs_to :agent
+        has_many :calls
+      end
+      Call = new_model(:call, phone_id: :integer) do
+        belongs_to :phone
+      end
+    end
+
+    let(:created_calls) { [] }
+    let(:agents) {
+      3.times.map do
+        Agent.create.tap do |agent|
+          [true, false].each do |enabled|
+            phone_number = Phone.create(agent_id: agent.id, enabled: enabled)
+            created_calls << Call.create(phone_id: phone_number.id)
+          end
+        end
+      end
+    }
+
+    before(:each) do
+      Agent.delete_all
+      Phone.delete_all
+      Call.delete_all
+      agents
+    end
+
+    it "runs 1 query per object to fetch children with regular relationship" do
+      start_query_monitor
+      calls = Agent.find(*agents.map(&:id)).map(&:calls).flatten
+      expect(calls).to eq created_calls
+      expect(monitored_queries.length).to eq (1 + 3)
+    end
+
+    it "runs 1 query for all the owners to fetch with lazy relationship" do
+      start_query_monitor
+      calls = Agent.find(*agents.map(&:id)).map(&:calls_lazy).flatten
+      expect(calls).to eq created_calls
+      expect(monitored_queries.length).to eq (1 + 1)
+    end
+  end
+
   describe "has_one_lazy" do
     before(:all) do
       Account = new_model(:account) do
