@@ -93,6 +93,18 @@ RSpec.describe BatchLoaderActiveRecord do
     end
   end
 
+  describe "has_many_lazy through: ..." do
+    it "raises an error as it is not currently supported" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          has_many :phones
+          has_many_lazy :calls, through: :phones
+        end
+      }.to raise_error(NotImplementedError)
+    end
+  end
+
   describe "has_one_lazy" do
     before(:all) do
       Account = new_model(:account) do

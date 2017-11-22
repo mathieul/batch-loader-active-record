@@ -39,6 +39,9 @@ module BatchLoaderActiveRecord
     def has_many_lazy(*args)
       has_many(*args).tap do |reflections|
         assoc = reflections.values.last
+        if assoc.through_reflection?
+          raise NotImplementedError, "has_many :through associations are not yet supported"
+        end
         base_key = [table_name, assoc.name]
         define_method(:"#{assoc.name}_lazy") do |instance_scope = nil|
           batch_key = base_key
