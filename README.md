@@ -5,6 +5,11 @@
 
 This gem allows to leverage the awesome [batch-loader gem](https://github.com/exAspArk/batch-loader) to generate lazy Active Record relationships without any boilerplate.
 
+It is not intended to be used for all associations though, but only where necessary. It should be used as a complement to vanilla batch loaders written directly using [batch-loader gem](https://github.com/exAspArk/batch-loader).
+
+**This gem is in active deployment and is likely not yet ready to be used on production.**
+
+
 ## Description
 
 This is a very simple gem which is basically a mixin containg replacement macros for the 3 active record association macros (note that **polymorphic associations and association scopes are not yet supported**):
@@ -130,12 +135,58 @@ This time we want the list of phone numbers for a collection of contacts.
 
 ```ruby
 contacts.map(&:phone_numbers_lazy).flatten
-
 ```
+
+It is also possible to apply scopes and conditions to a lazy has_many association. For instance if we want to only fetch active phone numbers in the example above, you would specify the scope like so:
+
+```ruby
+contacts.map { |contact| contact.phone_numbers_lazy(PhoneNumber.active) }.flatten
+```
+
 
 ### Has Many :through ###
 
+Consider the following data model with a has-many association going through another has-many-through association. Agents can have many phones they use to call providers:
 
+```ruby
+class Agent < ActiveRecord::Base
+  include BatchLoaderActiveRecord
+  has_many :phones
+  has_many_lazy :providers, through: :phones
+end
+
+class Phone < ActiveRecord::Base
+  belongs_to :agent
+  has_many :calls
+  has_many :providers, through: :calls
+end
+
+class Call < ActiveRecord::Base
+  belongs_to :provider
+  belongs_to :phone
+end
+
+class Provider < ActiveRecord::Base
+  has_many :calls
+end
+```
+
+We want to fetch the list of providers who were called by a list of agents:
+
+```ruby
+agents.map(&:providers_lazy).uniq
+```
+
+This would trigger this query for the collection of agents with ids 4212, 265 and 2309:
+
+```sql
+SELECT providers.*, agents.ID AS _instance_id
+FROM providers
+INNER JOIN calls ON calls.provider_id = providers.ID
+INNER JOIN phones ON phones.ID = calls.phone_id
+INNER JOIN agents ON agents.ID = phones.agent_id
+WHERE (agents. ID IN(4212, 265, 2309))
+```
 
 
 ## Development
