@@ -14,12 +14,12 @@ module BatchLoaderActiveRecord
         reflect = reflections.values.last
         assert_not_polymorphic(reflect)
         batch_key = [table_name, reflect.name]
-        assoc_scope = if reflect.scope.nil?
-          reflect.klass
-        else
-          reflect.klass.instance_eval(&reflect.scope)
-        end
         define_method(:"#{reflect.name}_lazy") do
+          assoc_scope = if reflect.scope.nil?
+            reflect.klass
+          else
+            reflect.klass.instance_eval(&reflect.scope)
+          end
           foreign_key_value = send(reflect.foreign_key) or return nil
           BatchLoader.for(foreign_key_value).batch(key: batch_key) do |foreign_key_values, loader|
             assoc_scope.where(id: foreign_key_values).each { |instance| loader.call(instance.id, instance) }
@@ -32,11 +32,15 @@ module BatchLoaderActiveRecord
       has_one(*args).tap do |reflections|
         reflect = reflections.values.last
         assert_not_polymorphic(reflect)
-        assert_no_scope(reflect)
         batch_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do
+          assoc_scope = if reflect.scope.nil?
+            reflect.klass
+          else
+            reflect.klass.instance_eval(&reflect.scope)
+          end
           BatchLoader.for(id).batch(key: batch_key) do |model_ids, loader|
-            reflect.klass.where(reflect.foreign_key => model_ids).each do |instance|
+            assoc_scope.where(reflect.foreign_key => model_ids).each do |instance|
               loader.call(instance.public_send(reflect.foreign_key), instance)
             end
           end
@@ -48,13 +52,21 @@ module BatchLoaderActiveRecord
       has_many(*args).tap do |reflections|
         reflect = reflections.values.last
         assert_not_polymorphic(reflect)
-        assert_no_scope(reflect)
         base_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do |instance_scope = nil|
           batch_key = base_key
           batch_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
+          assoc_scope = if reflect.scope.nil?
+            reflect.klass
+          else
+            reflect.klass.instance_eval(&reflect.scope)
+          end
           BatchLoader.for(id).batch(default_value: [], key: batch_key) do |model_ids, loader|
-            relation = instance_scope || reflect.klass
+            relation = if instance_scope.nil?
+              assoc_scope
+            else
+              assoc_scope.instance_eval { instance_scope }
+            end
             if reflect.through_reflection?
               instances = self.class.fetch_for_model_ids(model_ids, relation: relation, reflection: reflect)
               instances.each do |instance|
@@ -92,11 +104,6 @@ module BatchLoaderActiveRecord
       if reflection.polymorphic? || reflection.options.has_key?(:as) || reflection.options.has_key?(:source_type)
         raise NotImplementedError, "polymorphic associations are not yet supported (#{reflection.name})"
       end
-    end
-
-    def assert_no_scope(reflection)
-      return if reflection.scope.nil?
-      raise NotImplementedError, "association scope is not yet supported (#{reflection.name})"
     end
 
     def reflection_chain(reflection)

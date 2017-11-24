@@ -12,7 +12,7 @@ It is not intended to be used for all associations though, but only where necess
 
 ## Description
 
-This is a very simple gem which is basically a mixin containg replacement macros for the 3 active record association macros (note that **polymorphic associations and association scopes are not yet supported**):
+This is a very simple gem which is basically a mixin containg replacement macros for the 3 active record association macros (refer to the [CHANGELOG](https://github.com/mathieul/batch-loader-active-record/blob/master/CHANGELOG.md) to know what is supported and what is not):
 
 * `belongs_to_lazy`
 * `has_one_lazy`

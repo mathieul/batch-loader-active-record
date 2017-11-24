@@ -44,7 +44,6 @@ RSpec.describe BatchLoaderActiveRecord do
     it "can have a scope" do
       posts = created_posts.values_at(0, 2)
       posts.first.update!(published: true)
-      start_query_monitor
       comments = Comment.where(post_id: posts.map(&:id))
       published_posts = comments.map(&:published_post_lazy)
       expect(published_posts).to eq [posts.first, nil]
@@ -65,15 +64,18 @@ RSpec.describe BatchLoaderActiveRecord do
       Account = new_model(:account) do
         include BatchLoaderActiveRecord
         has_one_lazy :affiliate
+        has_one_lazy :enabled_affiliate, -> { enabled }, class_name: 'Affiliate', foreign_key: 'account_id'
       end
-      Affiliate = new_model(:affiliate, account_id: :integer)
+      Affiliate = new_model(:affiliate, account_id: :integer, enabled: :boolean) do
+        scope :enabled, -> { where(enabled: true) }
+      end
     end
 
     let(:created_accounts) { [] }
     let(:created_affiliates) {
       3.times.map do
         created_accounts << (account = Account.create)
-        Affiliate.create(account_id: account.id)
+        Affiliate.create(account_id: account.id, enabled: true)
       end
     }
 
@@ -97,20 +99,19 @@ RSpec.describe BatchLoaderActiveRecord do
       expect(monitored_queries.length).to eq(1 + 1)
     end
 
+    it "can have a scope" do
+      affiliates = created_affiliates.values_at(0, 2)
+      affiliates.first.update!(enabled: false)
+      accounts = Account.find(*affiliates.map(&:account_id))
+      enabled_affiliates = accounts.map(&:enabled_affiliate_lazy)
+      expect(enabled_affiliates).to eq [nil, affiliates.second]
+    end
+
     it "raises an error if has_one association is inverse of a polymorphic association" do
       expect {
         new_model(:agent) do
           include BatchLoaderActiveRecord
           has_one_lazy :profile, as: :profile_owner
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if the association has a scope" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_one_lazy :profile, -> { where(deleted_at: nil) }
         end
       }.to raise_error(NotImplementedError)
     end
@@ -121,9 +122,11 @@ RSpec.describe BatchLoaderActiveRecord do
       Contact = new_model(:contact) do
         include BatchLoaderActiveRecord
         has_many_lazy :phone_numbers
+        has_many_lazy :us_phone_numbers, -> { usa }, class_name: 'PhoneNumber', foreign_key: 'contact_id'
       end
-      PhoneNumber = new_model(:phone_number, contact_id: :integer, enabled: :boolean) do
-        scope :active, -> { where(enabled: true) }
+      PhoneNumber = new_model(:phone_number, contact_id: :integer, enabled: :boolean, country_code: :integer) do
+        scope :enabled, -> { where(enabled: true) }
+        scope :usa, -> { where(country_code: 1) }
       end
     end
 
@@ -131,8 +134,8 @@ RSpec.describe BatchLoaderActiveRecord do
     let(:contacts) {
       3.times.map do
         Contact.create.tap do |contact|
-          created_phone_numbers << PhoneNumber.create(contact_id: contact.id, enabled: true)
-          created_phone_numbers << PhoneNumber.create(contact_id: contact.id, enabled: false)
+          created_phone_numbers << PhoneNumber.create(contact_id: contact.id, enabled: true, country_code: 1)
+          created_phone_numbers << PhoneNumber.create(contact_id: contact.id, enabled: false, country_code: 1)
         end
       end
     }
@@ -157,12 +160,21 @@ RSpec.describe BatchLoaderActiveRecord do
       expect(monitored_queries.length).to eq (1 + 1)
     end
 
+    it "can have a scope" do
+      phone_numbers = PhoneNumber.first(4)
+      phone_numbers.first.update!(country_code: 33)
+      phone_numbers.fourth.update!(country_code: 44)
+      contacts = Contact.find(*phone_numbers.map(&:contact_id).uniq)
+      us_numbers = contacts.map(&:us_phone_numbers_lazy).flatten
+      expect(us_numbers).to eq [phone_numbers.second, phone_numbers.third]
+    end
+
     it "can pass a scope to specify children conditions" do
       enabled_phone_numbers = created_phone_numbers.select(&:enabled?)
       start_query_monitor
       phone_numbers = Contact
         .find(*contacts.map(&:id))
-        .map { |contact| contact.phone_numbers_lazy(PhoneNumber.active) }
+        .map { |contact| contact.phone_numbers_lazy(PhoneNumber.enabled) }
         .flatten
 
       expect(phone_numbers).to eq enabled_phone_numbers
@@ -174,15 +186,6 @@ RSpec.describe BatchLoaderActiveRecord do
         new_model(:agent) do
           include BatchLoaderActiveRecord
           has_many_lazy :calls, as: :owner
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if the association has a scope" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_many_lazy :calls, -> { where(deleted_at: nil) }
         end
       }.to raise_error(NotImplementedError)
     end
@@ -202,8 +205,8 @@ RSpec.describe BatchLoaderActiveRecord do
       Call = new_model(:call, phone_id: :integer, provider_id: :integer) do
         belongs_to :provider
       end
-      Provider = new_model(:provider, enabled: :boolean) do
-        scope :active, -> { where(enabled: true) }
+      Provider = new_model(:provider, enabled: :boolean, status: :string) do
+        scope :enabled, -> { where(enabled: true) }
       end
     end
 
@@ -248,7 +251,7 @@ RSpec.describe BatchLoaderActiveRecord do
       start_query_monitor
       providers_fetched = Agent
         .find(*agents.map(&:id))
-        .map { |agent| agent.providers_lazy(Provider.active) }
+        .map { |agent| agent.providers_lazy(Provider.enabled) }
         .flatten
 
       expect(providers_fetched).to eq enabled_providers
