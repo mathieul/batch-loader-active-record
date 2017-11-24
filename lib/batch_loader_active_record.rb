@@ -13,6 +13,7 @@ module BatchLoaderActiveRecord
       belongs_to(*args).tap do |reflections|
         reflect = reflections.values.last
         assert_not_polymorphic(reflect)
+        assert_no_scope(reflect)
         batch_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do
           foreign_key_value = send(reflect.foreign_key) or return nil
@@ -27,6 +28,7 @@ module BatchLoaderActiveRecord
       has_one(*args).tap do |reflections|
         reflect = reflections.values.last
         assert_not_polymorphic(reflect)
+        assert_no_scope(reflect)
         batch_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do
           BatchLoader.for(id).batch(key: batch_key) do |model_ids, loader|

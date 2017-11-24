@@ -37,6 +37,24 @@ RSpec.describe BatchLoaderActiveRecord do
       expect(posts).to eq created_posts
       expect(monitored_queries.length).to eq(1 + 1)
     end
+
+    it "raises an error if belongs_to association is polymorphic" do
+      expect {
+        new_model(:call) do
+          include BatchLoaderActiveRecord
+          belongs_to_lazy :owner, polymorphic: true
+        end
+      }.to raise_error(NotImplementedError)
+    end
+
+    it "raises an error if the association has a scope" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          belongs_to_lazy :tenant, -> { where(deleted_at: nil) }
+        end
+      }.to raise_error(NotImplementedError)
+    end
   end
 
   describe "has_one_lazy" do
@@ -74,6 +92,24 @@ RSpec.describe BatchLoaderActiveRecord do
       affiliates = Account.find(created_accounts.map(&:id)).map(&:affiliate_lazy)
       expect(affiliates).to eq created_affiliates
       expect(monitored_queries.length).to eq(1 + 1)
+    end
+
+    it "raises an error if has_one association is inverse of a polymorphic association" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          has_one_lazy :profile, as: :profile_owner
+        end
+      }.to raise_error(NotImplementedError)
+    end
+
+    it "raises an error if the association has a scope" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          has_one_lazy :profile, -> { where(deleted_at: nil) }
+        end
+      }.to raise_error(NotImplementedError)
     end
   end
 
@@ -128,6 +164,24 @@ RSpec.describe BatchLoaderActiveRecord do
 
       expect(phone_numbers).to eq enabled_phone_numbers
       expect(monitored_queries.length).to eq (1 + 1)
+    end
+
+    it "raises an error if has_many association is inverse of a polymorphic association" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          has_many_lazy :calls, as: :owner
+        end
+      }.to raise_error(NotImplementedError)
+    end
+
+    it "raises an error if the association has a scope" do
+      expect {
+        new_model(:agent) do
+          include BatchLoaderActiveRecord
+          has_many_lazy :calls, -> { where(deleted_at: nil) }
+        end
+      }.to raise_error(NotImplementedError)
     end
   end
 
@@ -196,44 +250,6 @@ RSpec.describe BatchLoaderActiveRecord do
 
       expect(providers_fetched).to eq enabled_providers
       expect(monitored_queries.length).to eq (1 + 1)
-    end
-  end
-
-  describe "currently unsupported options" do
-    it "raises an error if belongs_to association is polymorphic" do
-      expect {
-        new_model(:call) do
-          include BatchLoaderActiveRecord
-          belongs_to_lazy :owner, polymorphic: true
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if has_one association is inverse of a polymorphic association" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_one_lazy :profile, as: :profile_owner
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if has_many association is inverse of a polymorphic association" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_many_lazy :calls, as: :owner
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if the association has a scope" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_many_lazy :calls, -> { where(deleted_at: nil) }
-        end
-      }.to raise_error(NotImplementedError)
     end
   end
 end
