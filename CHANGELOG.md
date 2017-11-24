@@ -2,6 +2,10 @@
 
 Unreleased
 
+* nothing yet
+
+v0.3.0
+
 * allow to specify an association scope with `belongs_to_lazy`, `has_one_lazy` and `has_many_lazy`
 
 v0.2.0
