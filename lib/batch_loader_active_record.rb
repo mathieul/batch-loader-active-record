@@ -12,6 +12,7 @@ module BatchLoaderActiveRecord
     def belongs_to_lazy(*args)
       belongs_to(*args).tap do |reflections|
         reflect = reflections.values.last
+        assert_not_polymorphic(reflect)
         batch_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do
           foreign_key_value = send(reflect.foreign_key) or return nil
@@ -25,6 +26,7 @@ module BatchLoaderActiveRecord
     def has_one_lazy(*args)
       has_one(*args).tap do |reflections|
         reflect = reflections.values.last
+        assert_not_polymorphic(reflect)
         batch_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do
           BatchLoader.for(id).batch(key: batch_key) do |model_ids, loader|
@@ -39,6 +41,8 @@ module BatchLoaderActiveRecord
     def has_many_lazy(*args)
       has_many(*args).tap do |reflections|
         reflect = reflections.values.last
+        assert_not_polymorphic(reflect)
+        assert_no_scope(reflect)
         base_key = [table_name, reflect.name]
         define_method(:"#{reflect.name}_lazy") do |instance_scope = nil|
           batch_key = base_key
@@ -74,6 +78,19 @@ module BatchLoaderActiveRecord
       select_relation
         .where("#{model_class.table_name}.#{model_class.primary_key} IN (?)", ids)
         .select("#{relation.table_name}.*, #{instance_id_path} AS _instance_id")
+    end
+
+    private
+
+    def assert_not_polymorphic(reflection)
+      if reflection.polymorphic? || reflection.options.has_key?(:as) || reflection.options.has_key?(:source_type)
+        raise NotImplementedError, "polymorphic associations are not yet supported (#{reflection.name})"
+      end
+    end
+
+    def assert_no_scope(reflection)
+      return if reflection.scope.nil?
+      raise NotImplementedError, "association scope is not yet supported (#{reflection.name})"
     end
 
     def reflection_chain(reflection)
