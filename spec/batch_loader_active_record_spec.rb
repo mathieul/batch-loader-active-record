@@ -3,17 +3,20 @@ RSpec.describe BatchLoaderActiveRecord do
 
   describe "belongs_to_lazy" do
     before(:all) do
-      Post = new_model(:post)
+      Post = new_model(:post, published: :boolean) do
+        scope :published, -> { where(published: true) }
+      end
       Comment = new_model(:comment, post_id: :integer) do
         include BatchLoaderActiveRecord
         belongs_to_lazy :post
+        belongs_to_lazy :published_post, -> { published }, class_name: 'Post', foreign_key: 'post_id'
       end
     end
 
     let(:created_posts) { [] }
     let(:comments) {
       3.times.map do
-        created_posts << (post = Post.create)
+        created_posts << (post = Post.create(published: false))
         Comment.create!(post: post)
       end
     }
@@ -38,20 +41,20 @@ RSpec.describe BatchLoaderActiveRecord do
       expect(monitored_queries.length).to eq(1 + 1)
     end
 
+    it "can have a scope" do
+      posts = created_posts.values_at(0, 2)
+      posts.first.update!(published: true)
+      start_query_monitor
+      comments = Comment.where(post_id: posts.map(&:id))
+      published_posts = comments.map(&:published_post_lazy)
+      expect(published_posts).to eq [posts.first, nil]
+    end
+
     it "raises an error if belongs_to association is polymorphic" do
       expect {
         new_model(:call) do
           include BatchLoaderActiveRecord
           belongs_to_lazy :owner, polymorphic: true
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
-    it "raises an error if the association has a scope" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          belongs_to_lazy :tenant, -> { where(deleted_at: nil) }
         end
       }.to raise_error(NotImplementedError)
     end
