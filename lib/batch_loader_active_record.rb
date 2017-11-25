@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require "batch_loader_active_record/version"
 require "batch-loader"
+require "batch_loader_active_record/version"
+require "batch_loader_active_record/association_manager"
 
 module BatchLoaderActiveRecord
   def self.included(base)
@@ -11,20 +12,8 @@ module BatchLoaderActiveRecord
   module ClassMethods
     def belongs_to_lazy(*args)
       belongs_to(*args).tap do |reflections|
-        reflect = reflections.values.last
-        assert_not_polymorphic(reflect)
-        batch_key = [table_name, reflect.name]
-        define_method(:"#{reflect.name}_lazy") do
-          assoc_scope = if reflect.scope.nil?
-            reflect.klass
-          else
-            reflect.klass.instance_eval(&reflect.scope)
-          end
-          foreign_key_value = send(reflect.foreign_key) or return nil
-          BatchLoader.for(foreign_key_value).batch(key: batch_key) do |foreign_key_values, loader|
-            assoc_scope.where(id: foreign_key_values).each { |instance| loader.call(instance.id, instance) }
-          end
-        end
+        manager = AssociationManager.new(model: self, reflection: reflections.values.last)
+        define_method(manager.accessor_name) { manager.belongs_to_batch_loader(self) }
       end
     end
 
