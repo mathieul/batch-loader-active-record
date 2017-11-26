@@ -17,6 +17,12 @@ module BatchLoaderActiveRecord
       end
     end
 
+    def association_accessor(name)
+      reflection = reflect_on_association(name) or raise "Can't find association #{name.inspect}"
+        manager = AssociationManager.new(model: self, reflection: reflection)
+        define_method(manager.accessor_name) { manager.belongs_to_batch_loader(self) }
+    end
+
     def has_one_lazy(*args)
       has_one(*args).tap do |reflections|
         manager = AssociationManager.new(model: self, reflection: reflections.values.last)

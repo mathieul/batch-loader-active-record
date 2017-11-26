@@ -24,20 +24,22 @@ RSpec.describe BatchLoaderActiveRecord do
     comments
   end
 
-  after(:each) { stop_query_monitor }
+  context "compare regular and lazy solutions" do
+    after(:each) { stop_query_monitor }
 
-  it "runs 1 query per owner to fetch with regular relationship" do
-    start_query_monitor
-    posts = Comment.find(*comments.map(&:id)).map(&:post)
-    expect(posts).to eq created_posts
-    expect(monitored_queries.length).to eq(1 + 3)
-  end
+    it "runs 1 query per owner to fetch with regular relationship" do
+      start_query_monitor
+      posts = Comment.find(*comments.map(&:id)).map(&:post)
+      expect(posts).to eq created_posts
+      expect(monitored_queries.length).to eq(1 + 3)
+    end
 
-  it "runs 1 query for all the owners to fetch with lazy relationship" do
-    start_query_monitor
-    posts = Comment.find(*comments.map(&:id)).map(&:post_lazy)
-    expect(posts).to eq created_posts
-    expect(monitored_queries.length).to eq(1 + 1)
+    it "runs 1 query for all the owners to fetch with lazy relationship" do
+      start_query_monitor
+      posts = Comment.find(*comments.map(&:id)).map(&:post_lazy)
+      expect(posts).to eq created_posts
+      expect(monitored_queries.length).to eq(1 + 1)
+    end
   end
 
   it "can have a scope" do
@@ -55,5 +57,19 @@ RSpec.describe BatchLoaderActiveRecord do
         belongs_to_lazy :owner, polymorphic: true
       end
     }.to raise_error(NotImplementedError)
+  end
+
+  it "can decouple describing the relationship and making it lazy" do
+    CommentAuthor = new_model(:comment_author, comment_id: :integer) do
+      include BatchLoaderActiveRecord
+      belongs_to :comment
+      association_accessor :comment
+    end
+    comments = []
+    authors = 2.times.map do
+      comments << (comment = Comment.create)
+      CommentAuthor.create(comment: comment)
+    end
+    expect(CommentAuthor.find(*authors.map(&:id)).map(&:comment_lazy)).to eq comments
   end
 end
