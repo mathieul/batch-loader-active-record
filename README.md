@@ -12,19 +12,25 @@ It is not intended to be used for all associations though, but only where necess
 
 ## Description
 
-This is a very simple gem which is basically a mixin containg replacement macros for the 3 active record association macros (refer to the [CHANGELOG](https://github.com/mathieul/batch-loader-active-record/blob/master/CHANGELOG.md) to know what is supported and what is not):
+This gem has a very simple implementation and delegates all batch loading responsibilities (used to avoid N+1 calls to the database) to the [batch-loader gem](https://github.com/exAspArk/batch-loader). It allows to generate a lazy association accessor with a simple statement: `association_accessor :association_name`.
+
+Note that it doesn't yet support all cases handled by Active Record associations, refer to the [CHANGELOG](https://github.com/mathieul/batch-loader-active-record/blob/master/CHANGELOG.md) to know what is supported and what is not.
+
+It is also possible to use one of the macros below in replacement of the original Active Record macro to both declare the association and trigger a lazy association accessort in a single statement.
 
 * `belongs_to_lazy`
 * `has_one_lazy`
 * `has_many_lazy`
 
-Those are intended to use in replacement of the original Active Record class methods when you also want to generate a method to avoid N+1 calls to the database when accessed for the elements of a collection. For more details on why N+1 queries are common when fetching associations read [the batch-loader gem README](https://github.com/exAspArk/batch-loader/#why).
+As soon as your lazy association accessor needs to do more than fetch all records of an association (using a scope or not), you're going to want to directly use the batch-loader gem. For more details on N+1 queries read the [batch-loader gem README](https://github.com/exAspArk/batch-loader/#why).
 
 For example let's imagine a post which can have many comments:
 
 ```ruby
 class Post < ActiveRecord::Base
-  has_many_lazy :comments
+  include BatchLoaderActiveRecord
+  has_many :comments
+  association_accessor :comments
 end
 
 class Comment < ActiveRecord::Base

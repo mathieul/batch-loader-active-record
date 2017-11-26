@@ -19,8 +19,19 @@ module BatchLoaderActiveRecord
 
     def association_accessor(name)
       reflection = reflect_on_association(name) or raise "Can't find association #{name.inspect}"
-        manager = AssociationManager.new(model: self, reflection: reflection)
+      manager = AssociationManager.new(model: self, reflection: reflection)
+      case reflection.macro
+      when :belongs_to
         define_method(manager.accessor_name) { manager.belongs_to_batch_loader(self) }
+      when :has_one
+        define_method(manager.accessor_name) { manager.has_one_to_batch_loader(self) }
+      when :has_many
+        define_method(manager.accessor_name) do |instance_scope = nil|
+          manager.has_many_to_batch_loader(self, instance_scope)
+        end
+      else
+        raise NotImplementedError, "association kind #{reflection.macro.inspect} is not yet supported"
+      end
     end
 
     def has_one_lazy(*args)

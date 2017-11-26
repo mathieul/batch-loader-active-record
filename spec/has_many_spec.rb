@@ -73,6 +73,22 @@ RSpec.describe BatchLoaderActiveRecord do
         end
       }.to raise_error(NotImplementedError)
     end
+
+    it "can decouple describing the relationship and making it lazy" do
+      EmailAddress = new_model(:EmailAddress, contact_id: :integer)
+      Contact.instance_eval do
+        has_many :email_addresses
+        association_accessor :email_addresses
+      end
+      email_addresses = []
+      contacts = 2.times.map do
+        Contact.create.tap do |contact|
+          email_addresses << EmailAddress.create(contact_id: contact.id)
+          email_addresses << EmailAddress.create(contact_id: contact.id)
+        end
+      end
+      expect(Contact.find(*contacts.map(&:id)).map(&:email_addresses_lazy).flatten).to eq email_addresses
+    end
   end
 
   describe "has_many_lazy through: ..." do

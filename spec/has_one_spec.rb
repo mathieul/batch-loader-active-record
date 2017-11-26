@@ -56,4 +56,19 @@ RSpec.describe BatchLoaderActiveRecord do
       end
     }.to raise_error(NotImplementedError)
   end
+
+  it "can decouple describing the relationship and making it lazy" do
+    AccountProfile = new_model(:account_profile, account_id: :integer)
+    Account.instance_eval do
+      include BatchLoaderActiveRecord
+      has_one :account_profile
+      association_accessor :account_profile
+    end
+    accounts = []
+    profiles = 2.times.map do
+      accounts << (account = Account.create)
+      AccountProfile.create(account_id: account.id)
+    end
+    expect(Account.find(*accounts.map(&:id)).map(&:account_profile_lazy)).to eq profiles
+  end
 end

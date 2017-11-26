@@ -2,7 +2,7 @@
 
 Unreleased
 
-* nothing yet
+* allow to decouple declaring the assocation with Active Record DSL and generate a lazy association accessor with `association_accessor`
 
 v0.3.0
 
