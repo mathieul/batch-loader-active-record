@@ -29,6 +29,8 @@ module BatchLoaderActiveRecord
         define_method(manager.accessor_name) do |instance_scope = nil|
           manager.has_many_to_batch_loader(self, instance_scope)
         end
+      when :has_and_belongs_to_many
+        define_method(manager.accessor_name) { manager.has_and_belongs_to_many_to_batch_loader(self) }
       else
         raise NotImplementedError, "association kind #{reflection.macro.inspect} is not yet supported"
       end

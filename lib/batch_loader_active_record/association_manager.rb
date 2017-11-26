@@ -49,6 +49,19 @@ module BatchLoaderActiveRecord
       end
     end
 
+    def has_and_belongs_to_many_to_batch_loader(instance)
+      BatchLoader.for(instance.id).batch(default_value: [], key: batch_key) do |model_ids, loader|
+        target_scope
+          .joins(habtm_join(reflection))
+          .where("#{reflection.join_table}.#{reflection.foreign_key} IN (?)", model_ids)
+          .each do |instance|
+            loader.call(instance.public_send(reflection.active_record.primary_key)) do |value|
+              value << instance
+            end
+          end
+      end
+    end
+
     private
 
     def target_scope
@@ -114,6 +127,14 @@ module BatchLoaderActiveRecord
         reflection.foreign_key
       end
       "#{model_class.table_name}.#{id_column}"
+    end
+
+    def habtm_join(reflection)
+      <<~SQL
+        INNER JOIN #{reflection.join_table}
+                ON #{reflection.join_table}.#{reflection.association_foreign_key} =
+                   #{reflection.klass.table_name}.#{reflection.active_record.primary_key}
+      SQL
     end
   end
 end
