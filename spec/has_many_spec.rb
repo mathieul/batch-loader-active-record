@@ -1,4 +1,4 @@
-RSpec.describe BatchLoaderActiveRecord do
+RSpec.describe "lazy has_many associations" do
   after(:each) { stop_query_monitor }
 
   describe "has_many_lazy" do

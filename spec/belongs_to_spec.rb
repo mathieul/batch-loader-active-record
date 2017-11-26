@@ -1,4 +1,4 @@
-RSpec.describe BatchLoaderActiveRecord do
+RSpec.describe "lazy belongs_to associations" do
   before(:all) do
     Post = new_model(:post, published: :boolean) do
       scope :published, -> { where(published: true) }

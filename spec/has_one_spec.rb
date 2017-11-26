@@ -1,4 +1,4 @@
-RSpec.describe BatchLoaderActiveRecord do
+RSpec.describe "lazy has_one associations" do
   before(:all) do
     Account = new_model(:account) do
       include BatchLoaderActiveRecord
