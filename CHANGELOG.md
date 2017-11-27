@@ -4,6 +4,10 @@ Unreleased
 
 * none
 
+v0.4.0
+
+* support `has_and_belongs_to` associations
+
 v0.3.1
 
 * allow to decouple declaring the assocation with Active Record DSL and generate a lazy association accessor with `association_accessor`

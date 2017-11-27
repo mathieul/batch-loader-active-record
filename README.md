@@ -21,6 +21,7 @@ It is also possible to use one of the macros below in replacement of the origina
 * `belongs_to_lazy`
 * `has_one_lazy`
 * `has_many_lazy`
+* `has_and_belongs_to_many_lazy`
 
 As soon as your lazy association accessor needs to do more than fetch all records of an association (using a scope or not), you're going to want to directly use the batch-loader gem. For more details on N+1 queries read the [batch-loader gem README](https://github.com/exAspArk/batch-loader/#why).
 
@@ -133,7 +134,7 @@ end
 
 class PhoneNumber < ActiveRecord::Base
   belongs_to :contact
-  scope :active, -> { where(enabled: true) }
+  scope :enabled, -> { where(enabled: true) }
 end
 ```
 
@@ -143,10 +144,10 @@ This time we want the list of phone numbers for a collection of contacts.
 contacts.map(&:phone_numbers_lazy).flatten
 ```
 
-It is also possible to apply scopes and conditions to a lazy has_many association. For instance if we want to only fetch active phone numbers in the example above, you would specify the scope like so:
+It is also possible to apply scopes and conditions to a lazy has_many association. For instance if we want to only fetch enabled phone numbers in the example above, you would specify the scope like so:
 
 ```ruby
-contacts.map { |contact| contact.phone_numbers_lazy(PhoneNumber.active) }.flatten
+contacts.map { |contact| contact.phone_numbers_lazy(PhoneNumber.enabled) }.flatten
 ```
 
 
@@ -192,6 +193,28 @@ INNER JOIN calls ON calls.provider_id = providers.ID
 INNER JOIN phones ON phones.ID = calls.phone_id
 INNER JOIN agents ON agents.ID = phones.agent_id
 WHERE (agents. ID IN(4212, 265, 2309))
+```
+
+### Has And Belongs To Many ###
+
+Consider the following data model:
+
+```ruby
+class User < ActiveRecord::Base
+  include BatchLoaderActiveRecord
+  has_and_belongs_to_many :roles
+  association_accessor :roles
+end
+
+class Role < ActiveRecord::Base
+  has_and_belongs_to_many :users
+end
+```
+
+This time we want the list of roles for a collection of users.
+
+```ruby
+users.map(&:roles_lazy).flatten
 ```
 
 
