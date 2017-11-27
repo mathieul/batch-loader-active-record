@@ -1,12 +1,12 @@
 RSpec.describe "lazy has_and_belongs_to_many associations" do
   before(:all) do
     role_table, user_table = create_join_table :role, :user
-    User = new_model(:user, user_table) do
+    User = new_model(:user, table_name: user_table) do
       include BatchLoaderActiveRecord
       has_and_belongs_to_many :roles
       association_accessor :roles
     end
-    Role = new_model(:role, role_table)
+    Role = new_model(:role, table_name: role_table)
   end
 
   let(:admin)    { Role.create }

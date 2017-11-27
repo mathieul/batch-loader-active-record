@@ -6,7 +6,8 @@ require 'securerandom'
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 module ActiveRecordHelpers
-  def new_model(create_table, table_name = "#{create_table}_#{SecureRandom.hex(6)}", fields = {}, &block)
+  def new_model(create_table, fields = {table_name: nil}, &block)
+    table_name = fields.delete(:table_name) || "#{create_table}_#{SecureRandom.hex(6)}"
     model = Class.new(ActiveRecord::Base) do
       self.table_name = table_name
       connection.create_table(table_name, :force => true) do |table|
