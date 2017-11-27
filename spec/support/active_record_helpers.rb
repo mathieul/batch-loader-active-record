@@ -6,8 +6,8 @@ require 'securerandom'
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 module ActiveRecordHelpers
-  def new_model(create_table, fields = {}, &block)
-    table_name = "#{create_table}_#{SecureRandom.hex(6)}"
+  def new_model(create_table, fields = {table_name: nil}, &block)
+    table_name = fields.delete(:table_name) || "#{create_table}_#{SecureRandom.hex(6)}"
     model = Class.new(ActiveRecord::Base) do
       self.table_name = table_name
       connection.create_table(table_name, :force => true) do |table|
@@ -21,6 +21,16 @@ module ActiveRecordHelpers
     model.class_eval(&block) if block_given?
     model.reset_column_information
     model
+  end
+
+  def create_join_table(model1, model2)
+    ["#{model1}_#{SecureRandom.hex(6)}", "#{model2}_#{SecureRandom.hex(6)}"].tap do |table1, table2|
+      table_name = [table1, table2].join('_')
+      ActiveRecord::Base.connection.create_table(table_name, id: false) do |t|
+        t.column :"#{model1}_id", :integer
+        t.column :"#{model2}_id", :integer
+      end
+    end
   end
 
   attr_reader :monitored_queries
