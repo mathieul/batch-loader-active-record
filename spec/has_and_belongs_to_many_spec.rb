@@ -47,6 +47,11 @@ RSpec.describe "lazy has_and_belongs_to_many associations" do
     expect(joe.roles_lazy(Role.enabled)).to eq [agent]
   end
 
+  it "doesn't aggregate lazy associations with different scopes" do |variable|
+    expect(jane.roles_lazy).to eq [admin, reporter]
+    expect(jane.roles_lazy(Role.enabled)).to eq [admin]
+  end
+
   it "can use a 1-liner to declare an association and generate a lazy accessor" do
     role_table, user_table = create_join_table :person, :quality
     Person = new_model(:person, table_name: user_table) do

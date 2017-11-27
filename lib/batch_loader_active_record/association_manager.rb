@@ -46,7 +46,9 @@ module BatchLoaderActiveRecord
     end
 
     def has_and_belongs_to_many_to_batch_loader(instance, instance_scope)
-      BatchLoader.for(instance.id).batch(default_value: [], key: batch_key) do |model_ids, loader|
+      custom_key = batch_key
+      custom_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
+      BatchLoader.for(instance.id).batch(default_value: [], key: custom_key) do |model_ids, loader|
         instance_id_path = "#{reflection.join_table}.#{reflection.foreign_key}"
         relation_with_scope(instance_scope)
           .joins(habtm_join(reflection))

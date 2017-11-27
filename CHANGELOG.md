@@ -4,6 +4,10 @@ Unreleased
 
 * none
 
+v0.4.1
+
+* fix cache issue when calling lazy association accessor with different scopes for `has_and_belongs_to` associations
+
 v0.4.0
 
 * support `has_and_belongs_to` associations
