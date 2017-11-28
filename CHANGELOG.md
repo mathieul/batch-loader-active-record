@@ -4,6 +4,10 @@ Unreleased
 
 * none
 
+v0.4.2
+
+* fix to support activerecord v4.2.10 and test v4.2, v5.0, v5.1 and v5.2 using appraisal
+
 v0.4.1
 
 * fix cache issue when calling lazy association accessor with different scopes for `has_and_belongs_to` associations

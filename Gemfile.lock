@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    batch-loader-active-record (0.4.1)
+    batch-loader-active-record (0.4.2)
       batch-loader (~> 1.2.0)
 
 GEM
