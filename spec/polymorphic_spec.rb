@@ -24,18 +24,18 @@ RSpec.describe "polymorphic associations" do
     Tag.delete_all
     Address.delete_all
     Ticket.delete_all
+    addresses.each { |address| Tag.create(taggable: address) }
+    tickets.each { |ticket| 2.times { Tag.create(taggable: ticket) } }
   end
 
   describe "fetch a polymorphic association" do
     it "can fetch a polymorphic association from a has_one association" do
-      addresses.each { |address| Tag.create(taggable: address) }
       selected = Address.find(addresses.first.id, addresses.third.id)
       expected_tags = Tag.where(taggable_id: selected.map(&:id), taggable_type: 'Address')
-      expect(selected.map(&:tag_lazy)).to eq expected_tags
+      expect(selected.map(&:tag_lazy)).to match_array expected_tags
     end
 
     it "can fetch a polymorphic association from a has_many association" do
-      tickets.each { |ticket| 2.times { Tag.create(taggable: ticket) } }
       selected = Ticket.find(tickets.first.id, tickets.third.id)
       expected_tags = Tag.where(taggable_id: selected.map(&:id), taggable_type: 'Ticket')
       expect(selected.map(&:tags_lazy).flatten).to eq expected_tags

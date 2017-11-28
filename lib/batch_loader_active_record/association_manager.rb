@@ -35,7 +35,9 @@ module BatchLoaderActiveRecord
 
     def has_one_to_batch_loader(instance)
       BatchLoader.for(instance.id).batch(key: batch_key) do |model_ids, loader|
-        target_scope.where(reflection.foreign_key => model_ids).each do |instance|
+        relation = target_scope.where(reflection.foreign_key => model_ids)
+        relation = relation.where(reflection.type => model.to_s) if reflection.type
+        relation.each do |instance|
           loader.call(instance.public_send(reflection.foreign_key), instance)
         end
       end
@@ -46,6 +48,7 @@ module BatchLoaderActiveRecord
       custom_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
       BatchLoader.for(instance.id).batch(default_value: [], key: custom_key) do |model_ids, loader|
         relation = relation_with_scope(instance_scope)
+        relation = relation.where(reflection.type => model.to_s) if reflection.type
         if reflection.through_reflection
           instances = fetch_for_model_ids(model_ids, relation: relation)
           instances.each do |instance|
