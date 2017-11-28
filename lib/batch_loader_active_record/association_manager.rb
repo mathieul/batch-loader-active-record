@@ -32,7 +32,7 @@ module BatchLoaderActiveRecord
       custom_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
       BatchLoader.for(instance.id).batch(default_value: [], key: custom_key) do |model_ids, loader|
         relation = relation_with_scope(instance_scope)
-        if reflection.through_reflection?
+        if reflection.through_reflection
           instances = fetch_for_model_ids(model_ids, relation: relation)
           instances.each do |instance|
             loader.call(instance.public_send(:_instance_id)) { |value| value << instance }
@@ -119,7 +119,7 @@ module BatchLoaderActiveRecord
     end
 
     def reflection_join(orig_reflection, model_class)
-      reflection = orig_reflection.through_reflection? ? orig_reflection.through_reflection : orig_reflection
+      reflection = orig_reflection.through_reflection || orig_reflection
       id_path = id_path_for(reflection, model_class)
       table_name = reflection.active_record.table_name
       id_column = reflection.belongs_to? ? reflection.foreign_key : reflection.active_record.primary_key

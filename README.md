@@ -66,6 +66,8 @@ Or install it yourself as:
 
     $ gem install batch-loader-active-record
 
+Note that this gem supports [active record gem](https://rubygems.org/gems/activerecord) version 4.2.10 and above.
+
 
 ## Usage
 
