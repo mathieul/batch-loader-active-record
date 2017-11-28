@@ -26,8 +26,6 @@ RSpec.describe "polymorphic associations" do
     Ticket.delete_all
   end
 
-  after(:each) { stop_query_monitor }
-
   describe "fetch a polymorphic association" do
     it "can fetch a polymorphic association from a has_one association" do
       addresses.each { |address| Tag.create(taggable: address) }
@@ -53,14 +51,12 @@ RSpec.describe "polymorphic associations" do
     let(:address_tags) { Tag.where(taggable_id: addresses.map(&:id), taggable_type: 'Address') }
     let(:ticket_tags)  { Tag.where(taggable_id: tickets.map(&:id), taggable_type: 'Ticket') }
 
-    it "can fetch 1 type from the polymorphic association" do
-      tags = address_tags + ticket_tags
-      expect(tags.map { |tag| tag.taggable_lazy(Address) }.uniq).to match_array(addresses + [nil])
-    end
-
     it "can fetch several types from the polymorphic association" do
       tags = address_tags + ticket_tags
-      expect(tags.map { |tag| tag.taggable_lazy(Address, Ticket) }.uniq).to match_array(addresses + tickets)
+      start_query_monitor
+      expect(tags.map(&:taggable_lazy).uniq).to match_array(addresses + tickets)
+      expect(monitored_queries.length).to eq 2
+      stop_query_monitor
     end
   end
 end

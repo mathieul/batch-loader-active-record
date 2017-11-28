@@ -18,6 +18,21 @@ module BatchLoaderActiveRecord
       end
     end
 
+    def polymorphic_belongs_to_batch_loader(instance)
+      foreign_id = instance.send(reflection.foreign_key) or return nil
+      foreign_type = instance.send(reflection.foreign_type)&.constantize or return nil
+      BatchLoader.for([foreign_type, foreign_id]).batch(key: batch_key) do |foreign_ids_types, loader|
+        foreign_ids_types
+          .group_by(&:first)
+          .each do |type, type_ids|
+            ids = type_ids.map(&:second)
+            klass_scope(type).where(id: ids).each do |instance|
+              loader.call([type, instance.id], instance)
+            end
+          end
+      end
+    end
+
     def has_one_to_batch_loader(instance)
       BatchLoader.for(instance.id).batch(key: batch_key) do |model_ids, loader|
         target_scope.where(reflection.foreign_key => model_ids).each do |instance|
@@ -74,6 +89,14 @@ module BatchLoaderActiveRecord
         reflection.klass
       else
         reflection.klass.instance_eval(&reflection.scope)
+      end
+    end
+
+    def klass_scope(klass)
+      if reflection.scope.nil?
+        klass
+      else
+        klass.instance_eval(&reflection.scope)
       end
     end
 

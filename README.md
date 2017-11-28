@@ -14,7 +14,7 @@ It is not intended to be used for all associations though, but only where necess
 
 This gem has a very simple implementation and delegates all batch loading responsibilities (used to avoid N+1 calls to the database) to the [batch-loader gem](https://github.com/exAspArk/batch-loader). It allows to generate a lazy association accessor with a simple statement: `association_accessor :association_name`.
 
-Note that it doesn't yet support all cases handled by Active Record associations, refer to the [CHANGELOG](https://github.com/mathieul/batch-loader-active-record/blob/master/CHANGELOG.md) to know what is supported and what is not.
+Refer to the [CHANGELOG](https://github.com/mathieul/batch-loader-active-record/blob/master/CHANGELOG.md) to know what is supported and what is not.
 
 It is also possible to use one of the macros below in replacement of the original Active Record macro to both declare the association and trigger a lazy association accessort in a single statement.
 
