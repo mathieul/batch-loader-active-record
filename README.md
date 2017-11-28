@@ -232,6 +232,12 @@ Use [appraisal](https://github.com/thoughtbot/appraisal) to select the version o
 bundle exec appraisal activerecord-5-1 rspec
 ```
 
+Or run the specs for all supported versions at once:
+
+```shell
+bundle exec appraisal rspec
+```
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/mathieul/batch-loader-active-record. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
