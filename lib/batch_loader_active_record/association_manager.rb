@@ -5,7 +5,6 @@ module BatchLoaderActiveRecord
     def initialize(model:, reflection:)
       @model = model
       @reflection = reflection
-      assert_not_polymorphic
     end
 
     def accessor_name
@@ -80,12 +79,6 @@ module BatchLoaderActiveRecord
 
     def batch_key
       @batch_key ||= [model.table_name, reflection.name].freeze
-    end
-
-    def assert_not_polymorphic
-      if reflection.polymorphic? || reflection.options.has_key?(:as) || reflection.options.has_key?(:source_type)
-        raise NotImplementedError, "polymorphic associations are not yet supported (#{reflection.name})"
-      end
     end
 
     def fetch_for_model_ids(ids, relation:)
