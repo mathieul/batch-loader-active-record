@@ -15,7 +15,11 @@ module BatchLoaderActiveRecord
       manager = AssociationManager.new(model: self, reflection: reflection)
       case reflection.macro
       when :belongs_to
-        define_method(manager.accessor_name) { manager.belongs_to_batch_loader(self) }
+        if reflection.polymorphic?
+          define_method(manager.accessor_name) { manager.polymorphic_belongs_to_batch_loader(self) }
+        else
+          define_method(manager.accessor_name) { manager.belongs_to_batch_loader(self) }
+        end
       when :has_one
         define_method(manager.accessor_name) { manager.has_one_to_batch_loader(self) }
       when :has_many

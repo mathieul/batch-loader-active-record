@@ -2,7 +2,7 @@
 
 Unreleased
 
-* none
+* support polymorphic associations
 
 v0.4.3
 

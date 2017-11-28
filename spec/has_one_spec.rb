@@ -48,15 +48,6 @@ RSpec.describe "lazy has_one associations" do
     expect(enabled_affiliates).to eq [nil, affiliates.second]
   end
 
-  it "raises an error if has_one association is inverse of a polymorphic association" do
-    expect {
-      new_model(:agent) do
-        include BatchLoaderActiveRecord
-        has_one_lazy :profile, as: :profile_owner
-      end
-    }.to raise_error(NotImplementedError)
-  end
-
   it "can decouple describing the relationship and making it lazy" do
     AccountProfile = new_model(:account_profile, account_id: :integer)
     Account.instance_eval do

@@ -50,15 +50,6 @@ RSpec.describe "lazy belongs_to associations" do
     expect(published_posts).to eq [posts.first, nil]
   end
 
-  it "raises an error if belongs_to association is polymorphic" do
-    expect {
-      new_model(:call) do
-        include BatchLoaderActiveRecord
-        belongs_to_lazy :owner, polymorphic: true
-      end
-    }.to raise_error(NotImplementedError)
-  end
-
   it "can decouple describing the relationship and making it lazy" do
     CommentAuthor = new_model(:comment_author, comment_id: :integer) do
       include BatchLoaderActiveRecord

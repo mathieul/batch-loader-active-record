@@ -65,15 +65,6 @@ RSpec.describe "lazy has_many associations" do
       expect(monitored_queries.length).to eq (1 + 1)
     end
 
-    it "raises an error if has_many association is inverse of a polymorphic association" do
-      expect {
-        new_model(:agent) do
-          include BatchLoaderActiveRecord
-          has_many_lazy :calls, as: :owner
-        end
-      }.to raise_error(NotImplementedError)
-    end
-
     it "can decouple describing the relationship and making it lazy" do
       EmailAddress = new_model(:EmailAddress, contact_id: :integer)
       Contact.instance_eval do

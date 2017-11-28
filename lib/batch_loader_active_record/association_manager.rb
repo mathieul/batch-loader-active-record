@@ -5,7 +5,6 @@ module BatchLoaderActiveRecord
     def initialize(model:, reflection:)
       @model = model
       @reflection = reflection
-      assert_not_polymorphic
     end
 
     def accessor_name
@@ -19,9 +18,26 @@ module BatchLoaderActiveRecord
       end
     end
 
+    def polymorphic_belongs_to_batch_loader(instance)
+      foreign_id = instance.send(reflection.foreign_key) or return nil
+      foreign_type = instance.send(reflection.foreign_type)&.constantize or return nil
+      BatchLoader.for([foreign_type, foreign_id]).batch(key: batch_key) do |foreign_ids_types, loader|
+        foreign_ids_types
+          .group_by(&:first)
+          .each do |type, type_ids|
+            ids = type_ids.map(&:second)
+            klass_scope(type).where(id: ids).each do |instance|
+              loader.call([type, instance.id], instance)
+            end
+          end
+      end
+    end
+
     def has_one_to_batch_loader(instance)
       BatchLoader.for(instance.id).batch(key: batch_key) do |model_ids, loader|
-        target_scope.where(reflection.foreign_key => model_ids).each do |instance|
+        relation = target_scope.where(reflection.foreign_key => model_ids)
+        relation = relation.where(reflection.type => model.to_s) if reflection.type
+        relation.each do |instance|
           loader.call(instance.public_send(reflection.foreign_key), instance)
         end
       end
@@ -32,6 +48,7 @@ module BatchLoaderActiveRecord
       custom_key += [instance_scope.to_sql.hash] unless instance_scope.nil?
       BatchLoader.for(instance.id).batch(default_value: [], key: custom_key) do |model_ids, loader|
         relation = relation_with_scope(instance_scope)
+        relation = relation.where(reflection.type => model.to_s) if reflection.type
         if reflection.through_reflection
           instances = fetch_for_model_ids(model_ids, relation: relation)
           instances.each do |instance|
@@ -78,14 +95,16 @@ module BatchLoaderActiveRecord
       end
     end
 
-    def batch_key
-      @batch_key ||= [model.table_name, reflection.name].freeze
+    def klass_scope(klass)
+      if reflection.scope.nil?
+        klass
+      else
+        klass.instance_eval(&reflection.scope)
+      end
     end
 
-    def assert_not_polymorphic
-      if reflection.polymorphic? || reflection.options.has_key?(:as) || reflection.options.has_key?(:source_type)
-        raise NotImplementedError, "polymorphic associations are not yet supported (#{reflection.name})"
-      end
+    def batch_key
+      @batch_key ||= [model.table_name, reflection.name].freeze
     end
 
     def fetch_for_model_ids(ids, relation:)
