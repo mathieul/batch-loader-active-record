@@ -2,11 +2,18 @@ PATH
   remote: .
   specs:
     batch-loader-active-record (0.4.2)
+      activerecord (>= 4.2.0, < 5.3.0)
       batch-loader (~> 1.2.0)
 
 GEM
   remote: https://rubygems.org/
   specs:
+    activemodel (5.1.4)
+      activesupport (= 5.1.4)
+    activerecord (5.1.4)
+      activemodel (= 5.1.4)
+      activesupport (= 5.1.4)
+      arel (~> 8.0)
     activesupport (5.1.4)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (~> 0.7)
@@ -16,6 +23,7 @@ GEM
       bundler
       rake
       thor (>= 0.14.0)
+    arel (8.0.0)
     batch-loader (1.2.0)
     byebug (9.1.0)
     coderay (1.1.2)
