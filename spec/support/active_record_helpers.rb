@@ -6,8 +6,8 @@ require 'securerandom'
 ActiveRecord::Base.establish_connection(adapter: 'sqlite3', database: ':memory:')
 
 module ActiveRecordHelpers
-  def new_model(create_table, fields = {table_name: nil}, &block)
-    table_name = fields.delete(:table_name) || "#{create_table}_#{SecureRandom.hex(6)}"
+  def new_model(create_table, fields = {}, &block)
+    table_name = single_table_name(create_table)
     model = Class.new(ActiveRecord::Base) do
       self.table_name = table_name
       connection.create_table(table_name, :force => true) do |table|
@@ -23,14 +23,19 @@ module ActiveRecordHelpers
     model
   end
 
-  def create_join_table(model1, model2)
-    ["#{model1}_#{SecureRandom.hex(6)}", "#{model2}_#{SecureRandom.hex(6)}"].tap do |table1, table2|
-      table_name = [table1, table2].join('_')
-      ActiveRecord::Base.connection.create_table(table_name, id: false) do |t|
-        t.column :"#{model1}_id", :integer
-        t.column :"#{model2}_id", :integer
-      end
+  def create_join_table(*names)
+    table_name = join_table_name(names)
+    ActiveRecord::Base.connection.create_table(table_name, id: false) do |t|
+      names.each { |name| t.column :"#{name}_id", :integer }
     end
+  end
+
+  def join_table_name(names)
+    names.map(&method(:single_table_name)).sort.join('_')
+  end
+
+  def single_table_name(name)
+    name.to_s.pluralize
   end
 
   attr_reader :monitored_queries

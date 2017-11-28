@@ -1,12 +1,12 @@
 RSpec.describe "lazy has_and_belongs_to_many associations" do
   before(:all) do
-    role_table, user_table = create_join_table :role, :user
-    User = new_model(:user, table_name: user_table) do
+    create_join_table :role, :user
+    User = new_model(:user) do
       include BatchLoaderActiveRecord
       has_and_belongs_to_many :roles
       association_accessor :roles
     end
-    Role = new_model(:role, table_name: role_table, enabled: :boolean) do
+    Role = new_model(:role, enabled: :boolean) do
       scope :enabled, -> { where(enabled: true) }
     end
   end
@@ -53,12 +53,12 @@ RSpec.describe "lazy has_and_belongs_to_many associations" do
   end
 
   it "can use a 1-liner to declare an association and generate a lazy accessor" do
-    role_table, user_table = create_join_table :person, :quality
-    Person = new_model(:person, table_name: user_table) do
+    create_join_table :person, :quality
+    Person = new_model(:person) do
       include BatchLoaderActiveRecord
       has_and_belongs_to_many_lazy :qualities
     end
-    Quality = new_model(:quality, table_name: role_table)
+    Quality = new_model(:quality)
 
     strong, smart = 2.times.map { Quality.create }
     lizzy = Person.create
